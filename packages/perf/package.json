@@ -1,0 +1,28 @@
+{
+  "name": "@sanix/perf",
+  "version": "1.0.0",
+  "description": "SANIX perf — worker pools, connection pools, request batching, lazy loading, memory pools, debounce/throttle, perf monitoring, warmup, and a 3-tier cache hierarchy.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": { "node": ">=20.0.0" }
+}

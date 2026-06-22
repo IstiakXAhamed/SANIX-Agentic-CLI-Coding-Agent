@@ -1,0 +1,43 @@
+{
+  "name": "@sanix/workflows",
+  "version": "1.0.0",
+  "description": "SANIX declarative YAML agent pipelines — pre-built agent personas/templates, workflow executor with retry/timeout/parallel/conditional/loop/transform, tool composition, and built-in workflows (code-review, bug-fix, feature-implement, refactor, docs-generate, security-audit, test-coverage)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/core": "*",
+    "@sanix/providers": "*",
+    "@sanix/tools": "*",
+    "eventemitter3": "^5.0.1",
+    "js-yaml": "^4.1.0",
+    "nanoid": "^5.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

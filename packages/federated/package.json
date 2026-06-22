@@ -1,0 +1,41 @@
+{
+  "name": "@sanix/federated",
+  "version": "1.0.0",
+  "description": "SANIX federated learning — ModelManager, 5 aggregation strategies (FedAvg/FedProx/Krum/TrimmedMean/Median), UpdateExchange, DifferentialPrivacy (DP-SGD), and FederatedManager coordinator.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./aggregation": {
+      "types": "./dist/aggregation/index.d.ts",
+      "import": "./dist/aggregation/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

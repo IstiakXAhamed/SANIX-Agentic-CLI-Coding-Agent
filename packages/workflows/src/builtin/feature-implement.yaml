@@ -1,0 +1,99 @@
+name: feature-implement
+description: |
+  End-to-end feature implementation: plan the feature, write the
+  implementation, write tests, update documentation, and run the full
+  test suite. Each agent step uses a specific persona (planner, coder,
+  writer) — the agentLoopFactory is responsible for honoring the
+  persona hint passed in the inputs.
+version: 1.0.0
+inputs:
+  - name: feature_description
+    type: string
+    description: A clear, concise description of the feature to implement.
+    required: true
+  - name: target_dir
+    type: directory
+    description: Directory containing the codebase to modify.
+    required: true
+
+steps:
+  - id: plan
+    name: Plan the feature
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Plan the implementation of the following feature. Break the
+          work into discrete, well-scoped tasks with explicit
+          acceptance criteria. Identify dependencies between tasks.
+
+          Feature: ${inputs.feature_description}
+          Target directory: ${inputs.target_dir}
+      persona: { literal: planner }
+
+  - id: code
+    name: Write the implementation
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Implement the following feature per the plan. Write clean,
+          idiomatic code that follows existing project conventions. Do
+          not break existing tests.
+
+          Feature: ${inputs.feature_description}
+          Plan: ${steps.plan.result}
+      persona: { literal: coder }
+    retry:
+      max: 2
+      backoffMs: 500
+
+  - id: tests
+    name: Write tests
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Write tests for the feature implementation below. Cover the
+          happy path, edge cases, and error handling. Tests should
+          fail without the implementation and pass with it.
+
+          Feature: ${inputs.feature_description}
+          Implementation: ${steps.code.result}
+      persona: { literal: coder }
+
+  - id: docs
+    name: Update documentation
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Update the project documentation to reflect the new feature.
+          Update the README, API docs, and any examples as needed. Do
+          not document internal implementation details.
+
+          Feature: ${inputs.feature_description}
+          Implementation: ${steps.code.result}
+      persona: { literal: writer }
+
+  - id: full_suite
+    name: Run full test suite
+    type: tool
+    tool: run_tests
+    inputs:
+      path: { input: target_dir }
+    timeout: 120000
+
+outputs:
+  - name: plan
+    value: { ref: 'steps.plan.result' }
+  - name: implementation
+    value: { ref: 'steps.code.result' }
+  - name: tests
+    value: { ref: 'steps.tests.result' }
+  - name: docs
+    value: { ref: 'steps.docs.result' }
+  - name: test_results
+    value: { ref: 'steps.full_suite.result' }
+
+onError: abort

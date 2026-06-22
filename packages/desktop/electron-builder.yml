@@ -1,0 +1,109 @@
+# SANIX Desktop — Electron Builder Configuration
+# UNSIGNED BUILDS — bypasses code signing for easy distribution
+# Users on macOS: right-click → Open (bypasses Gatekeeper)
+# Users on Windows: click "More info" → "Run anyway" (bypasses SmartScreen)
+
+appId: dev.sanix.desktop
+productName: SANIX
+copyright: Copyright © 2026 Istiak Ahamed. All rights reserved.
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - package.json
+
+# ─── macOS (UNSIGNED) ────────────────────────────────────────────────────────
+# Bypasses code signing + Gatekeeper. Users install via:
+#   1. Open the .dmg file
+#   2. Drag SANIX to Applications
+#   3. Right-click SANIX → Open → "Open anyway" (first launch only)
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.icns
+  target:
+    - dmg
+    - zip
+  # UNSIGNED — no Apple Developer certificate needed
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  notarize: false
+  # Allow installation without signing
+  extendInfo:
+    LSMinimumSystemVersion: "10.13.0"
+    NSHighResolutionCapable: true
+    NSAppTransportSecurity:
+      NSAllowsArbitraryLoads: true
+
+dmg:
+  title: "${productName} ${version}"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  # No signing required for DMG
+  sign: false
+
+# ─── Windows (UNSIGNED) ──────────────────────────────────────────────────────
+# Bypasses code signing + SmartScreen. Users install via:
+#   1. Run SANIX-Setup.exe
+#   2. Click "More info" → "Run anyway" (SmartScreen warning)
+#   3. Follow installer
+win:
+  icon: build/icon.ico
+  target:
+    - nsis
+    - portable
+  # UNSIGNED — no code signing certificate needed
+  signAndEditExecutable: false
+  forceCodeSigning: false
+  # Bypass signing requirements
+  signingHookDate: false
+  rfc3161TimeStampServer: ""
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: SANIX
+  # No signing
+  signDmg: false
+
+portable:
+  artifactName: "${productName}-${version}-portable.exe"
+
+# ─── Linux ───────────────────────────────────────────────────────────────────
+linux:
+  icon: build/icon.png
+  category: Development
+  target:
+    - AppImage
+    - deb
+    - tar.gz
+
+deb:
+  depends:
+    - libnotify4
+    - libxtst6
+    - libnss3
+
+# ─── Publish (GitHub Releases) ───────────────────────────────────────────────
+publish:
+  provider: github
+  owner: istiak-ahamed
+  repo: sanix
+  releaseType: release

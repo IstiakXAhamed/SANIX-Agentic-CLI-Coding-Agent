@@ -1,0 +1,40 @@
+{
+  "name": "@sanix/optimizer",
+  "version": "1.0.0",
+  "description": "SANIX context & token optimization toolkit — exact BPE tokenizer, semantic chunker, attention-weighted selection, dynamic budget reallocation, lazy expansion, message consolidation, RAG context, mid-run compression, type-aware tool-result truncation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/providers": "*",
+    "gpt-tokenizer": "^2.5.0",
+    "eventemitter3": "^5.0.1",
+    "nanoid": "^5.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,80 @@
+name: security-audit
+description: |
+  Security audit workflow: scan project dependencies, check them
+  against known CVEs, audit the codebase for risky patterns (use of
+  eval, hardcoded secrets, unsafe deserialization, etc.), and produce
+  a consolidated security report with severity-tagged findings.
+version: 1.0.0
+inputs:
+  - name: root
+    type: directory
+    description: Root directory of the project to audit.
+    required: true
+  - name: include_dev_deps
+    type: boolean
+    description: When true, also audit dev dependencies.
+    default: false
+
+steps:
+  - id: deps
+    name: Scan dependencies
+    type: tool
+    tool: get_dependencies
+    inputs:
+      path: { input: root }
+
+  - id: cves
+    name: Check for known CVEs
+    type: agent
+    inputs:
+      goal:
+        template: |
+          For each dependency listed below, check whether any known
+          CVEs affect the installed version. Use web search to consult
+          the NVD and the package's security advisories. Report each
+          finding as: package, version, CVE id, severity, summary.
+
+          Dependencies: ${steps.deps.result}
+          Include dev deps: ${inputs.include_dev_deps}
+      persona: { literal: researcher }
+
+  - id: patterns
+    name: Audit code patterns
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Audit the codebase below for risky patterns:
+          - use of eval() / new Function()
+          - hardcoded secrets / API keys
+          - unsafe deserialization (e.g. JSON.parse of untrusted input
+            without validation)
+          - shell injection (user input concatenated into shell commands)
+          - disabled security headers / TLS verification
+
+          Codebase root: ${inputs.root}
+          Report each finding as: file, line, pattern, severity, recommendation.
+      persona: { literal: reviewer }
+
+  - id: report
+    name: Build security report
+    type: transform
+    transform: |
+      ({
+        auditedAt: new Date().toISOString(),
+        root: inputs.root,
+        includeDevDeps: inputs.include_dev_deps,
+        dependencies: steps.deps ? steps.deps.result : null,
+        cves: steps.cves ? steps.cves.result : null,
+        codeFindings: steps.patterns ? steps.patterns.result : null,
+        summary: {
+          cveCount: Array.isArray(steps.cves.result) ? steps.cves.result.length : 0,
+          findingCount: Array.isArray(steps.patterns.result) ? steps.patterns.result.length : 0,
+        },
+      })
+
+outputs:
+  - name: report
+    value: { ref: 'steps.report.result' }
+
+onError: continue

@@ -1,0 +1,50 @@
+{
+  "name": "@sanix/multiagent",
+  "version": "1.0.0",
+  "description": "SANIX multi-agent orchestration — agent teams, debate modes, majority voting, Mixture-of-Experts routing, swarm coordination, hierarchical decomposition, and a consensus engine with six reconciliation methods.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./strategies": {
+      "types": "./dist/strategies/index.d.ts",
+      "import": "./dist/strategies/index.js"
+    },
+    "./templates": {
+      "types": "./dist/templates/index.d.ts",
+      "import": "./dist/templates/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/core": "*",
+    "@sanix/providers": "*",
+    "@sanix/observe": "*",
+    "zod": "^3.24.0",
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1",
+    "p-limit": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

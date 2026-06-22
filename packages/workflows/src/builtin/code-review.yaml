@@ -1,0 +1,79 @@
+name: code-review
+description: |
+  Review a code change end-to-end: read the source file, analyze its
+  AST, run the linter, run associated tests, and produce a structured
+  review report with severity-tagged findings. Treats lint warnings as
+  review findings when `strict` is true.
+version: 1.0.0
+inputs:
+  - name: file
+    type: file
+    description: Path to the source file to review.
+    required: true
+  - name: strict
+    type: boolean
+    description: When true, treat lint warnings as review findings.
+    default: false
+steps:
+  - id: read
+    name: Read source file
+    type: tool
+    tool: read_file
+    inputs:
+      path: { input: file }
+
+  - id: ast
+    name: Analyze AST
+    type: tool
+    tool: analyze_ast
+    inputs:
+      path: { input: file }
+
+  - id: lint
+    name: Run linter
+    type: tool
+    tool: run_linter
+    inputs:
+      path: { input: file }
+    retry:
+      max: 1
+      backoffMs: 200
+    onFailure:
+      - id: lint_note
+        name: Note lint failure
+        type: transform
+        transform: '({ note: "linter unavailable or failed — review manually" })'
+
+  - id: tests
+    name: Run associated tests
+    type: tool
+    tool: run_tests
+    inputs:
+      path: { input: file }
+    timeout: 30000
+    onFailure:
+      - id: tests_note
+        name: Note test failure
+        type: transform
+        transform: '({ note: "tests failed or unavailable — see test output" })'
+
+  - id: report
+    name: Build review report
+    type: transform
+    transform: |
+      ({
+        file: inputs.file,
+        strict: inputs.strict,
+        ast: steps.ast ? steps.ast.result : null,
+        lint: steps.lint ? steps.lint.result : null,
+        lintNote: steps.lint_note ? steps.lint_note.result : null,
+        tests: steps.tests ? steps.tests.result : null,
+        testsNote: steps.tests_note ? steps.tests_note.result : null,
+        generatedAt: Date.now(),
+      })
+
+outputs:
+  - name: report
+    value: { ref: 'steps.report.result' }
+
+onError: continue

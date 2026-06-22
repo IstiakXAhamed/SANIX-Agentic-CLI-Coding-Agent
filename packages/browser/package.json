@@ -1,0 +1,41 @@
+{
+  "name": "@sanix/browser",
+  "version": "1.0.0",
+  "description": "SANIX browser automation via Playwright — exposes browser actions as SanixTools, plus a BrowserSession flow chain and an autonomous WebAgent",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/providers": "^1.0.0",
+    "@sanix/tools": "^1.0.0",
+    "eventemitter3": "^5.0.1",
+    "nanoid": "^5.1.0",
+    "playwright": "^1.40.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

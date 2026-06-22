@@ -1,0 +1,52 @@
+{
+  "name": "@sanix/marketplace",
+  "version": "1.0.0",
+  "description": "SANIX marketplace — discover, install, publish, and update community plugins (workflows, personas, tools, knowledge schemas, agent templates, themes, complete plugins) with a trust + validation system",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.24.0",
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1"
+  },
+  "peerDependencies": {
+    "@sanix/core": "^1.0.0",
+    "@sanix/workflows": "^1.0.0",
+    "@sanix/tools": "^1.0.0",
+    "@sanix/knowledge": "^1.0.0",
+    "@sanix/multiagent": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sanix/core": { "optional": true },
+    "@sanix/workflows": { "optional": true },
+    "@sanix/tools": { "optional": true },
+    "@sanix/knowledge": { "optional": true },
+    "@sanix/multiagent": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

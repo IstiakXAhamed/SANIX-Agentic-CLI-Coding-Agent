@@ -1,0 +1,43 @@
+{
+  "name": "@sanix/self-improve",
+  "version": "1.0.0",
+  "description": "SANIX self-improvement toolkit — prompt evolution via genetic mutation + crossover, fitness evaluation via benchmark suites, A/B testing with statistical significance, prompt registry with lineage tracking, and meta-learning over mutation strategies (multi-armed bandit).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/core": "*",
+    "@sanix/providers": "*",
+    "@sanix/bench": "*",
+    "zod": "^3.24.0",
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1",
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

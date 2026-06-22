@@ -1,0 +1,64 @@
+{
+  "name": "@sanix/cli",
+  "version": "1.0.0",
+  "description": "SANIX command-line interface — the user-facing entry point built on Commander.js.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "sanix": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanix/auth": "*",
+    "@sanix/bench": "*",
+    "@sanix/config": "*",
+    "@sanix/core": "*",
+    "@sanix/knowledge": "*",
+    "@sanix/memory-v2": "*",
+    "@sanix/multiagent": "*",
+    "@sanix/optimizer": "*",
+    "@sanix/providers": "*",
+    "@sanix/rag": "*",
+    "@sanix/sandbox": "*",
+    "@sanix/self-improve": "*",
+    "@sanix/semantic-cache": "*",
+    "@sanix/server": "*",
+    "@sanix/share": "*",
+    "@sanix/tools": "*",
+    "@sanix/tui": "*",
+    "chalk": "^5.4.0",
+    "commander": "^13.1.0",
+    "ignore": "^5.3.0",
+    "nanoid": "^5.1.0",
+    "ora": "^8.1.1",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,71 @@
+name: docs-generate
+description: |
+  Generate documentation from a codebase: scan the directory tree,
+  index the codebase to extract symbols, generate API docs for every
+  public symbol, and generate README sections describing the module's
+  purpose, installation, and usage.
+version: 1.0.0
+inputs:
+  - name: root
+    type: directory
+    description: Root directory of the codebase to document.
+    required: true
+  - name: format
+    type: string
+    description: Output format for the docs (e.g. 'markdown', 'html').
+    default: markdown
+
+steps:
+  - id: scan
+    name: Scan directory tree
+    type: tool
+    tool: list_directory
+    inputs:
+      path: { input: root }
+
+  - id: index
+    name: Index codebase (extract symbols)
+    type: tool
+    tool: index_codebase
+    inputs:
+      rootPath: { input: root }
+    timeout: 120000
+
+  - id: api_docs
+    name: Generate API docs
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Generate API documentation in ${inputs.format} format for
+          every public symbol extracted below. Group symbols by
+          module/file. Include signatures, parameter descriptions, and
+          usage examples where possible.
+
+          Codebase root: ${inputs.root}
+          Symbol index: ${steps.index.result}
+      persona: { literal: writer }
+
+  - id: readme
+    name: Generate README sections
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Generate README sections for the codebase below. Include:
+          (1) a one-paragraph module purpose, (2) installation
+          instructions, (3) a quick-start usage example, (4) a link
+          list to the API docs.
+
+          Codebase root: ${inputs.root}
+          Directory tree: ${steps.scan.result}
+          API docs: ${steps.api_docs.result}
+      persona: { literal: writer }
+
+outputs:
+  - name: api_docs
+    value: { ref: 'steps.api_docs.result' }
+  - name: readme
+    value: { ref: 'steps.readme.result' }
+
+onError: continue

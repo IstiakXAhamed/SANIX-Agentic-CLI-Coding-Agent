@@ -1,0 +1,34 @@
+{
+  "name": "@sanix/intel",
+  "version": "1.0.0",
+  "description": "SANIX code intelligence — LSP client, multi-language symbol extraction (6 languages), call graph, references, type hierarchy, and code search",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": { "node": ">=20.0.0" },
+  "license": "MIT"
+}

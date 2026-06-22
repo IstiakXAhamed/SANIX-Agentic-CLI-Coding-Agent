@@ -1,0 +1,27 @@
+{
+  "name": "@sanix/server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./mcp": { "import": "./dist/mcp/index.js", "types": "./dist/mcp/index.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sanix/core": "*",
+    "@sanix/providers": "*",
+    "@sanix/tools": "*",
+    "@sanix/config": "*",
+    "@sanix/auth": "*",
+    "@sanix/share": "*",
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "zod": "^3.24.0",
+    "nanoid": "^5.1.0",
+    "eventemitter3": "^5.0.1"
+  }
+}

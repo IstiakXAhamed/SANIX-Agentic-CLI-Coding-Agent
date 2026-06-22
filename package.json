@@ -1,0 +1,117 @@
+{
+  "name": "sanix",
+  "version": "1.0.0",
+  "description": "SANIX — Sanim's Agentic Neural Intelligence eXecutor. A production-grade agentic CLI with 42 packages, 18 LLM adapters, 9 memory tiers, multi-agent orchestration, RAG, knowledge graph, code sandbox, browser automation, desktop GUI, and more.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "author": "Istiak Ahamed",
+  "homepage": "https://github.com/sanix-ahmed/sanix",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanix-ahmed/sanix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sanix-ahmed/sanix/issues"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "cli",
+    "llm",
+    "anthropic",
+    "openai",
+    "claude",
+    "gpt",
+    "gemini",
+    "mistral",
+    "groq",
+    "deepseek",
+    "coding-assistant",
+    "agentic",
+    "automation",
+    "terminal",
+    "tui",
+    "multi-agent",
+    "rag",
+    "knowledge-graph",
+    "code-review",
+    "self-improving",
+    "code-sandbox",
+    "mcp",
+    "developer-tools",
+    "typescript"
+  ],
+  "bin": {
+    "sanix": "./bin/sanix.js"
+  },
+  "files": [
+    "bin",
+    "packages/*/dist",
+    "packages/*/package.json",
+    "README.md",
+    "QUICKSTART.md",
+    "INSTALL.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "turbo lint",
+    "clean": "turbo clean && rm -rf node_modules",
+    "typecheck": "turbo typecheck",
+    "sanix": "node packages/cli/dist/main.js",
+    "postinstall": "node -e \"if(!process.env.SANIX_SKIP_BUILD){try{require('child_process').execSync('npm run build',{stdio:'ignore'})}catch(e){}}\" || true"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@lancedb/lancedb": "^0.30.0",
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@xenova/transformers": "^2.17.2",
+    "better-sqlite3": "^11.10.0",
+    "chalk": "^5.4.0",
+    "commander": "^13.1.0",
+    "diff": "^7.0.0",
+    "eventemitter3": "^5.0.1",
+    "glob": "^11.0.1",
+    "gpt-tokenizer": "^2.5.0",
+    "ignore": "^7.0.3",
+    "ink": "^5.1.0",
+    "js-yaml": "^4.2.0",
+    "marked": "^15.0.12",
+    "nanoid": "^5.1.0",
+    "open": "^10.0.0",
+    "openai": "^4.90.0",
+    "ora": "^8.1.1",
+    "playwright": "^1.40.0",
+    "p-limit": "^6.2.0",
+    "p-retry": "^6.2.1",
+    "react": "^18.3.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/diff": "^6.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "tsup": "^8.4.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

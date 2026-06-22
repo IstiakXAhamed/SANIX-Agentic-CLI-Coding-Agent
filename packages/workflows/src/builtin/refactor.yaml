@@ -1,0 +1,120 @@
+name: refactor
+description: |
+  Behavior-preserving refactor workflow: identify code smells in the
+  target file, propose a refactoring plan, apply the changes, run the
+  test suite, and verify that behavior was preserved.
+version: 1.0.0
+inputs:
+  - name: target
+    type: file
+    description: Path to the file (or directory) to refactor.
+    required: true
+  - name: smell
+    type: string
+    description: Optional specific code smell to focus on (e.g. 'long method').
+    required: false
+
+steps:
+  - id: smells
+    name: Identify code smells
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Read the following file and identify code smells (long
+          methods, duplicated logic, deep nesting, poor naming, etc.).
+          Rank them by severity.
+
+          Target: ${inputs.target}
+          Focus smell: ${inputs.smell}
+      persona: { literal: reviewer }
+
+  - id: propose
+    name: Propose refactoring
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Propose a behavior-preserving refactoring plan for the code
+          smells identified below. Sequence the refactors so each one
+          is independently verifiable. Do NOT apply changes yet.
+
+          Target: ${inputs.target}
+          Smells: ${steps.smells.result}
+      persona: { literal: architect }
+
+  - id: apply
+    name: Apply refactoring
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Apply the refactoring plan below one step at a time. After
+          each step, the test suite will be run separately. Stop and
+          report if any step changes behavior.
+
+          Target: ${inputs.target}
+          Plan: ${steps.propose.result}
+      persona: { literal: coder }
+    retry:
+      max: 1
+      backoffMs: 500
+
+  - id: tests
+    name: Run tests after refactor
+    type: tool
+    tool: run_tests
+    inputs:
+      path: { input: target }
+    timeout: 60000
+
+  - id: verify
+    name: Verify behavior preserved
+    type: conditional
+    branches:
+      - when:
+          op: eq
+          left: { ref: 'steps.tests.result.success' }
+          right: { literal: true }
+        then:
+          - id: verify_ok
+            name: Confirm behavior preserved
+            type: agent
+            inputs:
+              goal:
+                template: |
+                  The test suite passed after the refactor. Confirm
+                  that the behavior is preserved by reviewing the diff
+                  and reporting any subtle semantic changes.
+
+                  Target: ${inputs.target}
+                  Refactor summary: ${steps.apply.result}
+              persona: { literal: reviewer }
+      - when:
+          op: eq
+          left: { ref: 'steps.tests.result.success' }
+          right: { literal: false }
+        then:
+          - id: verify_failed
+            name: Report behavior regression
+            type: transform
+            transform: |
+              ({
+                regression: true,
+                message: 'Tests failed after refactor — behavior was NOT preserved',
+                testResults: steps.tests.result,
+                refactorSummary: steps.apply.result,
+              })
+
+outputs:
+  - name: smells
+    value: { ref: 'steps.smells.result' }
+  - name: plan
+    value: { ref: 'steps.propose.result' }
+  - name: refactored
+    value: { ref: 'steps.apply.result' }
+  - name: verification
+    value:
+      ref: 'steps.verify.result'
+
+onError: abort

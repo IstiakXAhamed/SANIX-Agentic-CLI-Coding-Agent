@@ -1,0 +1,205 @@
+# SANIX — Auto Release Workflow
+# Creates GitHub Releases with desktop binaries when you push a tag (v1.0.0)
+#
+# Usage:
+#   git tag v1.0.0
+#   git push origin v1.0.0
+#
+# This workflow will:
+#   1. Build the CLI (all packages)
+#   2. Build the macOS .dmg (unsigned — bypasses Gatekeeper)
+#   3. Build the Windows .exe (unsigned — bypasses SmartScreen)
+#   4. Build the Linux .AppImage
+#   5. Upload all binaries to a GitHub Release
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ─── Build CLI (all platforms need this) ──────────────────────────────────
+  build-cli:
+    name: Build CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-build
+          path: packages/*/dist/
+
+  # ─── macOS Build ──────────────────────────────────────────────────────────
+  build-mac:
+    name: Build macOS (.dmg)
+    needs: build-cli
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-build
+          path: packages/
+      - name: Install desktop deps
+        run: cd packages/desktop && npm install --no-audit --no-fund
+      - name: Build desktop (TypeScript)
+        run: cd packages/desktop && npm run build
+      - name: Build macOS DMG (unsigned)
+        run: cd packages/desktop && npx electron-builder --mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Bypass code signing
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          APPLE_ID: ''
+          APPLE_APP_SPECIFIC_PASSWORD: ''
+          APPLE_TEAM_ID: ''
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: |
+            packages/desktop/release/*.dmg
+            packages/desktop/release/*.zip
+
+  # ─── Windows Build ────────────────────────────────────────────────────────
+  build-win:
+    name: Build Windows (.exe)
+    needs: build-cli
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-build
+          path: packages/
+      - name: Install desktop deps
+        run: cd packages/desktop && npm install --no-audit --no-fund
+      - name: Build desktop (TypeScript)
+        run: cd packages/desktop && npm run build
+      - name: Build Windows EXE (unsigned)
+        run: cd packages/desktop && npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Bypass code signing
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          WINDOWS_CERT_FILE: ''
+          WINDOWS_CERT_PASSWORD: ''
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-build
+          path: |
+            packages/desktop/release/*.exe
+            packages/desktop/release/*.yml
+
+  # ─── Linux Build ──────────────────────────────────────────────────────────
+  build-linux:
+    name: Build Linux (.AppImage)
+    needs: build-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-build
+          path: packages/
+      - name: Install desktop deps
+        run: cd packages/desktop && npm install --no-audit --no-fund
+      - name: Build desktop (TypeScript)
+        run: cd packages/desktop && npm run build
+      - name: Build Linux AppImage
+        run: cd packages/desktop && npx electron-builder --linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            packages/desktop/release/*.AppImage
+            packages/desktop/release/*.deb
+
+  # ─── Create GitHub Release ────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [build-mac, build-win, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-build
+          path: release-assets/
+      - uses: actions/download-artifact@v4
+        with:
+          name: win-build
+          path: release-assets/
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+          path: release-assets/
+      - name: List release assets
+        run: ls -la release-assets/
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: SANIX ${{ github.ref_name }}
+          body: |
+            # SANIX ${{ github.ref_name }}
+
+            ## 📥 Download
+
+            ### macOS (.dmg)
+            1. Download `SANIX-*-mac.dmg`
+            2. Open the .dmg file
+            3. Drag SANIX to Applications
+            4. Right-click → Open → "Open anyway" (first launch only)
+
+            ### Windows (.exe)
+            1. Download `SANIX-*-win.exe`
+            2. Run the .exe
+            3. Click "More info" → "Run anyway" (SmartScreen bypass)
+            4. Follow the installer
+
+            ### Linux (.AppImage)
+            1. Download `SANIX-*-linux.AppImage`
+            2. `chmod +x SANIX-*.AppImage`
+            3. `./SANIX-*.AppImage`
+
+            ## 📦 CLI Installation
+            ```bash
+            curl -fsSL https://sanix.dev/install.sh | bash
+            ```
+
+            ---
+            Created by Istiak Ahamed · MIT License · All rights reserved © 2026
+          files: |
+            release-assets/*.dmg
+            release-assets/*.zip
+            release-assets/*.exe
+            release-assets/*.AppImage
+            release-assets/*.deb
+          draft: false
+          prerelease: false

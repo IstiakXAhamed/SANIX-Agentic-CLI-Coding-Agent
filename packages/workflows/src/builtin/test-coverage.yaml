@@ -1,0 +1,96 @@
+name: test-coverage
+description: |
+  Test coverage workflow: run the test suite with coverage enabled,
+  extract uncovered lines from the coverage report, generate test
+  stubs for each uncovered function/branch, and suggest specific test
+  cases that would raise coverage.
+version: 1.0.0
+inputs:
+  - name: path
+    type: file
+    description: Path to the source file (or test directory) to cover.
+    required: true
+  - name: threshold
+    type: number
+    description: Minimum coverage percentage required (0-100).
+    default: 80
+
+steps:
+  - id: coverage
+    name: Run tests with coverage
+    type: tool
+    tool: run_tests
+    inputs:
+      path: { input: path }
+    timeout: 120000
+    onFailure:
+      - id: coverage_note
+        name: Note coverage failure
+        type: transform
+        transform: |
+          ({
+            note: 'test runner did not produce coverage — check configuration',
+            path: inputs.path,
+          })
+
+  - id: uncovered
+    name: Extract uncovered lines
+    type: transform
+    transform: |
+      ((function () {
+        var cov = steps.coverage && steps.coverage.result;
+        if (!cov || typeof cov !== 'object') return { lines: [], note: 'no coverage data' };
+        // Best-effort extraction — coverage report shape varies by runner.
+        var lines = [];
+        if (Array.isArray(cov.uncoveredLines)) {
+          lines = cov.uncoveredLines;
+        } else if (cov.lines && cov.lines.uncovered) {
+          lines = cov.lines.uncovered;
+        } else if (cov.coverage) {
+          Object.keys(cov.coverage).forEach(function (file) {
+            var f = cov.coverage[file];
+            if (f && f.uncoveredLines) lines.push({ file: file, lines: f.uncoveredLines });
+          });
+        }
+        return { lines: lines, threshold: inputs.threshold };
+      })())
+
+  - id: stubs
+    name: Generate test stubs
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Generate test stubs for each uncovered function/branch listed
+          below. Each stub should be a failing test case that, when
+          implemented, would cover the corresponding code path.
+
+          Path: ${inputs.path}
+          Uncovered: ${steps.uncovered.result}
+      persona: { literal: coder }
+
+  - id: suggestions
+    name: Suggest additional tests
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Suggest specific additional test cases that would raise
+          coverage of the file below above the threshold. Focus on
+          edge cases, error paths, and boundary conditions.
+
+          Path: ${inputs.path}
+          Threshold: ${inputs.threshold}%
+          Uncovered: ${steps.uncovered.result}
+          Generated stubs: ${steps.stubs.result}
+      persona: { literal: reviewer }
+
+outputs:
+  - name: uncovered
+    value: { ref: 'steps.uncovered.result' }
+  - name: stubs
+    value: { ref: 'steps.stubs.result' }
+  - name: suggestions
+    value: { ref: 'steps.suggestions.result' }
+
+onError: continue

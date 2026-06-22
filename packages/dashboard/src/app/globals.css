@@ -1,0 +1,215 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   SANIX Dashboard — Tailwind v4 theme tokens
+   Dark mode only (matches the CLI theme).
+   Brand palette from the SANIX spec:
+     bg       #0D1117   (deep void)
+     primary  #00D4FF   (cyan glow)
+     secondary#FFB347   (amber spark)
+     success  #39D353   (matrix green)
+     error    #FF4D4D   (alert red)
+     muted    #8B949E   (gray mist)
+   ========================================================================== */
+
+@theme {
+  --color-bg: #0d1117;
+  --color-bg-elevated: #161b22;
+  --color-bg-subtle: #1c2128;
+  --color-border: #30363d;
+  --color-border-muted: #21262d;
+  --color-fg: #e6edf3;
+  --color-fg-muted: #8b949e;
+  --color-fg-subtle: #6e7681;
+  --color-primary: #00d4ff;
+  --color-primary-foreground: #0d1117;
+  --color-secondary: #ffb347;
+  --color-secondary-foreground: #0d1117;
+  --color-success: #39d353;
+  --color-success-foreground: #0d1117;
+  --color-error: #ff4d4d;
+  --color-error-foreground: #0d1117;
+  --color-warning: #ffb347;
+  --color-muted: #8b949e;
+  --color-accent: #1f6feb;
+  --color-accent-foreground: #e6edf3;
+  --color-card: #161b22;
+  --color-card-foreground: #e6edf3;
+  --color-popover: #161b22;
+  --color-popover-foreground: #e6edf3;
+  --color-ring: #00d4ff;
+  --color-input: #30363d;
+  --color-sidebar: #0d1117;
+  --color-sidebar-foreground: #e6edf3;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-up: slide-up 0.25s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px 0 var(--color-primary);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 16px 2px var(--color-primary);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tailwind v4: dark mode is the only mode — apply token shadcn-style aliases. */
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-fg);
+  --card: var(--color-card);
+  --card-foreground: var(--color-card-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  --muted: var(--color-bg-subtle);
+  --muted-foreground: var(--color-fg-muted);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-accent-foreground);
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-error-foreground);
+  --success: var(--color-success);
+  --success-foreground: var(--color-success-foreground);
+  --warning: var(--color-warning);
+  --border: var(--color-border);
+  --input: var(--color-input);
+  --ring: var(--color-ring);
+  --radius: 6px;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ---- Scrollbars ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-fg-subtle);
+}
+
+/* ---- Selection ---- */
+::selection {
+  background-color: rgba(0, 212, 255, 0.25);
+  color: var(--color-fg);
+}
+
+/* ---- Focus ring ---- */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Utility classes ---- */
+.bg-bg {
+  background-color: var(--color-bg);
+}
+.bg-elevated {
+  background-color: var(--color-bg-elevated);
+}
+.bg-subtle {
+  background-color: var(--color-bg-subtle);
+}
+.text-primary-glow {
+  color: var(--color-primary);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+.border-grid {
+  border-color: var(--color-border);
+}
+.glow-primary {
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.15);
+}
+.glow-success {
+  box-shadow: 0 0 12px rgba(57, 211, 83, 0.15);
+}
+.glow-error {
+  box-shadow: 0 0 12px rgba(255, 77, 77, 0.15);
+}
+
+/* SANIX logo gradient */
+.logo-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-secondary) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle grid background for the dashboard shell */
+.bg-grid {
+  background-image: linear-gradient(
+      to right,
+      rgba(48, 54, 61, 0.4) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(48, 54, 61, 0.4) 1px, transparent 1px);
+  background-size: 32px 32px;
+}

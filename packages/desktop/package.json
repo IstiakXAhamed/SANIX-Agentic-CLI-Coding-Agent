@@ -1,0 +1,33 @@
+{
+  "name": "@sanix/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SANIX Desktop — Cross-platform GUI for SANIX (macOS, Windows, Linux)",
+  "author": "Istiak Ahamed",
+  "license": "MIT",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "tsc",
+    "build:mac": "tsc && electron-builder --mac",
+    "build:win": "tsc && electron-builder --win",
+    "build:linux": "tsc && electron-builder --linux",
+    "build:dir": "tsc && electron-builder --dir",
+    "build:all": "tsc && electron-builder -mwl",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist release"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

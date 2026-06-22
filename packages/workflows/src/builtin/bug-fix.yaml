@@ -1,0 +1,98 @@
+name: bug-fix
+description: |
+  Systematic bug-fix workflow: reproduce the bug, identify the root
+  cause, write a fix, run the existing test suite to catch regressions,
+  and verify the original failure no longer reproduces. Each "agent"
+  step delegates to the configured `agentLoopFactory` with a goal
+  string derived from the step's inputs.
+version: 1.0.0
+inputs:
+  - name: bug_description
+    type: string
+    description: A short description of the bug being reported.
+    required: true
+  - name: file
+    type: file
+    description: Path to the source file most likely affected.
+    required: true
+  - name: reproduce_command
+    type: string
+    description: Shell command that reproduces the bug.
+    required: false
+
+steps:
+  - id: reproduce
+    name: Reproduce the bug
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Reproduce the following bug and report the exact steps,
+          observed behavior, and expected behavior:
+
+          Bug: ${inputs.bug_description}
+          File: ${inputs.file}
+          Reproduce command: ${inputs.reproduce_command}
+      persona: { literal: debugger }
+
+  - id: root_cause
+    name: Identify root cause
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Identify the root cause of the bug described below. Read the
+          affected file, form a hypothesis, and verify it before
+          reporting. Do NOT apply a fix yet.
+
+          Bug: ${inputs.bug_description}
+          File: ${inputs.file}
+          Reproduction notes: ${steps.reproduce.result}
+      persona: { literal: debugger }
+
+  - id: fix
+    name: Write the fix
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Apply a minimal fix for the bug. Do not refactor unrelated
+          code. Add or update tests that would have caught the bug.
+
+          Bug: ${inputs.bug_description}
+          File: ${inputs.file}
+          Root cause: ${steps.root_cause.result}
+      persona: { literal: coder }
+
+  - id: tests
+    name: Run test suite
+    type: tool
+    tool: run_tests
+    inputs:
+      path: { input: file }
+    timeout: 60000
+
+  - id: verify
+    name: Verify the fix
+    type: agent
+    inputs:
+      goal:
+        template: |
+          Verify that the original bug no longer reproduces and that no
+          regressions were introduced. Report pass/fail with evidence.
+
+          Bug: ${inputs.bug_description}
+          File: ${inputs.file}
+          Fix applied: ${steps.fix.result}
+          Test results: ${steps.tests.result}
+      persona: { literal: debugger }
+
+outputs:
+  - name: root_cause
+    value: { ref: 'steps.root_cause.result' }
+  - name: fix
+    value: { ref: 'steps.fix.result' }
+  - name: verification
+    value: { ref: 'steps.verify.result' }
+
+onError: abort
