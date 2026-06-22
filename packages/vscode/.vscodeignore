@@ -1,0 +1,50 @@
+.vscode/**
+.vscode-test/**
+src/**
+/node_modules/**
+.gitignore
+.eslintrc*
+.turbo/**
+**/*.map
+**/*.ts
+tsconfig.json
+esbuild.config.mjs
+.github/**
+test/**
+coverage/**
+*.log
+
+# Source webview/ is copied to dist/webview/ at build time — ship only the dist copy.
+webview/**
+
+# CLI source and build tooling — not shipped (raw source, not the built runtime).
+sanix-v1.0.0/**
+scripts/**
+
+# ⚠️  bin/ is NOT excluded — it contains the bundled SANIX runtime and platform
+# bootstrap scripts. Removing it would break self-contained operation.
+# The bundled runtime's node_modules lives under bin/cli/node_modules/.
+#
+# Prune non-essential file types from the bundled runtime to reduce VSIX size.
+# These patterns apply to bin/cli/ which IS included by default.
+bin/cli/**/*.d.ts
+bin/cli/**/*.d.cts
+bin/cli/**/*.d.mts
+bin/cli/**/LICENSE
+bin/cli/**/LICENSE.txt
+bin/cli/**/*.md
+bin/cli/**/CHANGELOG*
+bin/cli/**/History*
+bin/cli/**/AUTHORS*
+bin/cli/**/*.c
+bin/cli/**/*.h
+bin/cli/**/*.cc
+bin/cli/**/*.cpp
+bin/cli/**/*.o
+bin/cli/**/*.obj
+bin/cli/**/*.tgz
+bin/cli/node_modules/.package-lock.json
+sanix-*.vsix
+THIS-ZIP-GUIDE.md
+PUBLISHING.md
+*.tgz

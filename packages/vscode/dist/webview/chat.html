@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SANIX Chat</title>
+  <link rel="stylesheet" href="chat.css" />
+</head>
+<body>
+  <div id="messages" role="log" aria-live="polite"></div>
+  <div id="composer">
+    <textarea id="input" placeholder="Ask SANIX…  (/help for commands, /intel for V16 pipeline)" rows="2"></textarea>
+    <div id="composer-buttons">
+      <button id="send" title="Send (Enter)">Send</button>
+      <button id="stop" title="Stop (Esc)" disabled>Stop</button>
+    </div>
+  </div>
+  <script src="chat.js"></script>
+</body>
+</html>

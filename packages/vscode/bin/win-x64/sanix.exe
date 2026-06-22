@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+/**
+ * SANIX — Bundled runtime bootstrap for Windows x64.
+ * @packageDocumentation
+ */
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const cliEntry = join(__dirname, "..", "cli", "packages", "cli", "dist", "main.js");
+
+try {
+  const mod = await import(cliEntry);
+  if (typeof mod.main === "function") {
+    await mod.main(process.argv);
+  } else {
+    console.error("✗ SANIX bundled CLI does not export main().");
+    process.exit(1);
+  }
+} catch (err) {
+  if (err?.code === "ERR_MODULE_NOT_FOUND" || err?.code === "MODULE_NOT_FOUND") {
+    console.error("\n  ✗ SANIX CLI runtime is not bundled.");
+    console.error("    Run: npm run build:cli\n");
+    process.exit(1);
+  }
+  throw err;
+}

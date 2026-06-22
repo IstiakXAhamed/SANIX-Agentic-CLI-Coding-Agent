@@ -1,0 +1,244 @@
+# SANIX VSCode Extension — CI/CD Pipeline
+#
+# On push to main:
+#   1. Builds all CLI packages (turbo)
+#   2. Bundles the VSIX with the freshly-built CLI
+#   3. Uploads the .vsix as a workflow artifact
+#
+# On tag push matching vscode-v*:
+#   1. Everything above
+#   2. Publishes to VS Code Marketplace
+#   3. Creates a GitHub Release with the .vsix
+#
+# Setup (one-time):
+#   1. Create a PAT at https://dev.azure.com/<your-org>/_usersSettings/tokens
+#      - Organization: "All accessible accounts"
+#      - Scopes: Marketplace > Acquire + Manage
+#      - Expiration: 1 year max
+#   2. Add the PAT as a repo secret named VSCE_TOKEN:
+#      GitHub repo → Settings → Secrets and variables → Actions → New secret
+#   3. Update CHANGELOG.md in packages/vscode/ before tagging
+#   4. Tag and push:
+#      git tag vscode-v1.0.1
+#      git push origin vscode-v1.0.1
+#
+# The VS Code extension lives at packages/vscode/ inside this monorepo.
+
+name: Publish VSCode Extension
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/vscode/**'
+      - 'packages/cli/**'
+      - 'packages/*/dist/**'
+      - '.github/workflows/publish-vscode-extension.yml'
+    tags:
+      - 'vscode-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.0.1) — must match packages/vscode/package.json'
+        required: false
+        default: ''
+
+permissions:
+  contents: write   # needed for creating the GitHub Release
+
+concurrency:
+  group: vscode-extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-extension:
+    name: Build CLI + bundle VSIX
+    runs-on: macos-latest   # ARM runner; build-cli.js prunes to current arch
+
+    defaults:
+      run:
+        working-directory: packages/vscode
+
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'packages/vscode/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install CLI dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: .
+
+      - name: Build CLI packages
+        run: npm run build
+        working-directory: .
+
+      - name: Install VSCode extension dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build CLI runtime (bundle into extension)
+        run: node scripts/build-cli.js --skip-build
+        # --skip-build because turbo already built the CLI above
+
+      - name: Build extension (esbuild)
+        run: npm run build
+
+      - name: Verify extension.js
+        run: |
+          if [ ! -f dist/extension.js ]; then
+            echo "::error::dist/extension.js not found after build"
+            exit 1
+          fi
+          echo "✓ dist/extension.js built ($(wc -c < dist/extension.js) bytes)"
+
+      - name: Package VSIX
+        run: |
+          npx vsce package --no-yarn --no-dependencies
+          ls -lh *.vsix
+
+      - name: Upload VSIX as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanix-vscode-vsix
+          path: packages/vscode/sanix-*.vsix
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Validate manifest
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const required = ['name', 'publisher', 'version', 'engines', 'main'];
+            const missing = required.filter(k => !pkg[k]);
+            if (missing.length > 0) {
+              console.error('Missing required fields:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('✓ Manifest valid —', pkg.name, 'v' + pkg.version, 'by', pkg.publisher);
+          "
+
+      - name: Verify bootstrap scripts exist
+        run: |
+          for f in bin/macos-arm64/sanix bin/macos-x64/sanix bin/linux-x64/sanix bin/win-x64/sanix.exe; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f not found"
+              exit 1
+            fi
+          done
+          echo "✓ All platform bootstrap scripts present"
+
+  publish:
+    name: Publish to Marketplace
+    needs: build-extension
+    runs-on: ubuntu-latest
+    # Only publish when a tag is pushed or manually triggered
+    if: |
+      startsWith(github.ref, 'refs/tags/vscode-v') ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sanix-vscode-vsix
+          path: .
+
+      - name: Verify version matches tag
+        if: startsWith(github.ref, 'refs/tags/vscode-v')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/vscode-v}"
+          PKG_VERSION=$(node -p "require('./packages/vscode/package.json').version")
+          echo "Tag version:     $TAG"
+          echo "package.json:    $PKG_VERSION"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "✓ Versions match"
+
+      - name: Publish to Marketplace
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        run: |
+          if [ -z "$VSCE_TOKEN" ]; then
+            echo "::error::VSCE_TOKEN secret is not set. Add it at:"
+            echo "::error::  Settings → Secrets and variables → Actions → New secret"
+            echo "::error::  Name: VSCE_TOKEN  Value: your Azure DevOps PAT"
+            exit 1
+          fi
+          npx vsce publish \
+            --no-yarn \
+            --no-dependencies \
+            -p "$VSCE_TOKEN" \
+            --packagePath sanix-*.vsix
+
+      - name: Extract version + Marketplace URL
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./packages/vscode/package.json').version")
+          PUBLISHER=$(node -p "require('./packages/vscode/package.json').publisher")
+          NAME=$(node -p "require('./packages/vscode/package.json').name")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "marketplace_url=https://marketplace.visualstudio.com/items?itemName=${PUBLISHER}.${NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VSCode Extension v${{ steps.meta.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          files: sanix-*.vsix
+          body: |
+            # SANIX VSCode Extension v${{ steps.meta.outputs.version }}
+
+            **Marketplace:** ${{ steps.meta.outputs.marketplace_url }}
+
+            ## Installation
+
+            Install directly from the Marketplace (within ~10 minutes of publish):
+            1. Open VS Code
+            2. Press `Ctrl+Shift+X` (Windows) or `Cmd+Shift+X` (macOS)
+            3. Search for "SANIX"
+            4. Click **Install**
+
+            Or install the `.vsix` attached to this release:
+            ```bash
+            code --install-extension sanix-${{ steps.meta.outputs.version }}.vsix
+            ```
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-pre') || contains(github.ref_name, '-beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "### ✅ Published to Marketplace" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Version:** v${{ steps.meta.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Marketplace:** ${{ steps.meta.outputs.marketplace_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "The extension will be searchable from within VS Code within ~10 minutes." >> "$GITHUB_STEP_SUMMARY"

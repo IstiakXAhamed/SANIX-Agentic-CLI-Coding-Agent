@@ -1,0 +1,169 @@
+/* SANIX chat webview — VS Code-themed, light/dark via CSS variables. */
+:root {
+  --bg: var(--vscode-editor-background, #1e1e1e);
+  --fg: var(--vscode-editor-foreground, #d4d4d4);
+  --accent: var(--vscode-button-background, #0e639c);
+  --accent-fg: var(--vscode-button-foreground, #fff);
+  --border: var(--vscode-panel-border, #2d2d2d);
+  --input-bg: var(--vscode-input-background, #313131);
+  --input-fg: var(--vscode-input-foreground, #d4d4d4);
+  --input-placeholder: var(--vscode-input-placeholderForeground, #888);
+  --added: var(--vscode-diffEditor-insertedTextBackground, rgba(80,200,80,0.18));
+  --removed: var(--vscode-diffEditor-removedTextBackground, rgba(220,80,80,0.18));
+  --link: var(--vscode-textLink-foreground, #4daafc);
+  --mono: var(--vscode-editor-font-family, "SF Mono", Menlo, Consolas, monospace);
+  --sans: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.msg.user {
+  background: var(--input-bg);
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.msg.assistant,
+.msg.system {
+  background: transparent;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.msg.error {
+  background: rgba(220, 80, 80, 0.12);
+  border-color: rgba(220, 80, 80, 0.5);
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.msg.streaming::after {
+  content: "▍";
+  animation: blink 1s steps(2) infinite;
+  color: var(--accent);
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.msg pre {
+  background: rgba(127, 127, 127, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-left: 3px solid var(--accent);
+  margin: 6px 0;
+}
+
+.msg pre.diff-add { background: var(--added); border-left-color: #50c878; }
+.msg pre.diff-del { background: var(--removed); border-left-color: #d85050; }
+
+.msg code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(127, 127, 127, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.msg a { color: var(--link); }
+
+.msg .meta {
+  font-size: 10px;
+  color: var(--input-placeholder);
+  margin-top: 4px;
+  font-family: var(--mono);
+}
+
+.msg .apply-btn {
+  margin-top: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#composer {
+  border-top: 1px solid var(--border);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg);
+}
+
+#input {
+  width: 100%;
+  resize: vertical;
+  min-height: 48px;
+  max-height: 200px;
+  padding: 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 13px;
+  outline: none;
+}
+
+#input:focus { border-color: var(--accent); }
+#input::placeholder { color: var(--input-placeholder); }
+
+#composer-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+#send, #stop {
+  padding: 4px 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#send:disabled, #stop:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#stop { background: var(--vscode-errorForeground, #d85050); }

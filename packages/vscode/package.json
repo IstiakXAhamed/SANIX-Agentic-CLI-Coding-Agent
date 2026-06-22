@@ -1,0 +1,283 @@
+{
+  "name": "sanix",
+  "displayName": "SANIX — Agentic Neural Intelligence eXecutor",
+  "description": "SANIX in your editor — 22 specialized agents, streaming chat, inline edit (Cmd+K), diff applier, V16 speed-first intelligence pipeline.",
+  "version": "1.0.0",
+  "publisher": "istiak-ahamed",
+  "license": "MIT",
+  "preview": false,
+  "icon": "media/icon.png",
+  "main": "./dist/extension.js",
+  "categories": [
+    "Machine Learning",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "anthropic",
+    "openai",
+    "code-assistant",
+    "cursor-alternative"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IstiakXAhamed/SANIX-Agentic-CLI-Coding-Agent.git",
+    "directory": "packages/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/IstiakXAhamed/SANIX-Agentic-CLI-Coding-Agent/issues"
+  },
+  "homepage": "https://github.com/istiak-ahamed/sanix/tree/main/packages/vscode#readme",
+  "scripts": {
+    "build": "node esbuild.config.mjs --production",
+    "build:cli": "node scripts/build-cli.js",
+    "package": "npm run build:cli && npm run build && vsce package --no-yarn --no-dependencies",
+    "publish": "npm run build:cli && npm run build && vsce publish --no-yarn --no-dependencies",
+    "publish:pre": "npm run build:cli && npm run build && vsce publish --no-yarn --no-dependencies --pre-release",
+    "unpublish": "vsce unpublish istiak-ahamed.sanix",
+    "ls": "vsce ls"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.2",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.3"
+  },
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:sanix.openChat",
+    "onCommand:sanix.sendToChat",
+    "onCommand:sanix.inlineEdit",
+    "onCommand:sanix.runAgent",
+    "onCommand:sanix.runUltraWorker",
+    "onCommand:sanix.explain",
+    "onCommand:sanix.fix",
+    "onCommand:sanix.commit",
+    "onCommand:sanix.doctor",
+    "onCommand:sanix.sessionsList",
+    "onCommand:sanix.switchSession",
+    "onCommand:sanix.showCost"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sanix-sidebar",
+          "title": "SANIX",
+          "icon": "media/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "sanix-sidebar": [
+        {
+          "type": "webview",
+          "id": "sanix.chatView",
+          "name": "Chat",
+          "icon": "media/icon.png",
+          "contextualTitle": "SANIX"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sanix.openChat",
+        "title": "SANIX: Open Chat",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.sendToChat",
+        "title": "SANIX: Send Selection to Chat",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.inlineEdit",
+        "title": "SANIX: Inline Edit (Cmd+K)",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.runAgent",
+        "title": "SANIX: Run Agent...",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.runUltraWorker",
+        "title": "SANIX: Run UltraWorker (Orchestrator)",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.explain",
+        "title": "SANIX: Explain Selection",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.fix",
+        "title": "SANIX: Fix Issues in File",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.commit",
+        "title": "SANIX: Generate Commit",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.doctor",
+        "title": "SANIX: Doctor (Health Check)",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.sessionsList",
+        "title": "SANIX: Sessions — List",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.switchSession",
+        "title": "SANIX: Sessions — Switch",
+        "category": "SANIX"
+      },
+      {
+        "command": "sanix.showCost",
+        "title": "SANIX: Show Cost (Today)",
+        "category": "SANIX"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "sanix.sendToChat",
+          "when": "editorHasSelection",
+          "group": "sanix@1"
+        },
+        {
+          "command": "sanix.explain",
+          "when": "editorHasSelection",
+          "group": "sanix@2"
+        },
+        {
+          "command": "sanix.runAgent",
+          "when": "editorHasSelection",
+          "group": "sanix@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sanix.sendToChat",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "sanix.explain",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "sanix.inlineEdit",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "sanix.sendToChat",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "sanix.openChat",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s"
+      }
+    ],
+    "configuration": {
+      "title": "SANIX",
+      "properties": {
+        "sanix.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional developer override. Absolute path to the `sanix` CLI binary. When empty (default), the extension uses the bundled SANIX runtime."
+        },
+        "sanix.defaultModel": {
+          "type": "string",
+          "default": "anthropic:claude-sonnet-4",
+          "description": "Default model used when no `--model` is supplied. Format: `provider:model`."
+        },
+        "sanix.streamOutput": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, token-by-token streaming is rendered in the webview (recommended). If false, the full response is shown once the CLI exits."
+        },
+        "sanix.maxInlineSelectionChars": {
+          "type": "number",
+          "default": 8000,
+          "minimum": 200,
+          "maximum": 200000,
+          "description": "Maximum size (in characters) of the selection that will be sent to inline edit (Cmd+K). Larger selections are truncated with a warning."
+        },
+        "sanix.autoApplyDiffs": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, ```diff fenced blocks returned by SANIX are applied automatically via a WorkspaceEdit (with native undo). Disable to review diffs manually."
+        },
+        "sanix.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the SANIX status bar item (idle / running / streaming / cost-warning / cost-critical / error)."
+        },
+        "sanix.theme": {
+          "type": "string",
+          "enum": ["auto", "light", "dark"],
+          "default": "auto",
+          "description": "Color theme used by the chat webview. `auto` follows the active VS Code color theme."
+        },
+        "sanix.costWarningThresholdUsd": {
+          "type": "number",
+          "default": 5.0,
+          "minimum": 0,
+          "description": "Daily cost (USD) at which the status bar turns amber (warning)."
+        },
+        "sanix.costCriticalThresholdUsd": {
+          "type": "number",
+          "default": 20.0,
+          "minimum": 0,
+          "description": "Daily cost (USD) at which the status bar turns red (critical)."
+        },
+        "sanix.intelligencePipeline": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, messages prefixed with `/intel` are routed through the V16 10-step intelligence pipeline (max 2 LLM calls per task)."
+        },
+        "sanix.enableVision": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable vision (image input) — images dragged into the chat webview are attached to the next message when the active provider supports multimodal input."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "sanix.diffAdded",
+        "description": "Color used for added lines in SANIX-applied diffs.",
+        "defaults": {
+          "light": "#587c0b",
+          "dark": "#81b71b"
+        }
+      },
+      {
+        "id": "sanix.diffRemoved",
+        "description": "Color used for removed lines in SANIX-applied diffs.",
+        "defaults": {
+          "light": "#ad0707",
+          "dark": "#e06c75"
+        }
+      }
+    ]
+  }
+}
