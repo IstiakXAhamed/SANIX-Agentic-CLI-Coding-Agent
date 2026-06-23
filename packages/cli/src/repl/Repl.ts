@@ -50,7 +50,15 @@ import {
   parseSlashCommand,
   type SlashCommand,
 } from './InputHandler.js';
-import { renderWelcome, renderHelpTable } from './welcome.js';
+import {
+  renderWelcome,
+  renderHelpTable,
+  initBlackBackground,
+  resetBackground,
+  BG_BLACK,
+  RST,
+  blackWrap,
+} from './welcome.js';
 import { renderStatusBar } from './status-bar.js';
 import type { StatusBarData } from './status-bar.js';
 
@@ -150,7 +158,7 @@ export class Repl extends EventEmitter {
     this.historyPath = opts.historyPath ?? HISTORY_PATH;
     this.input = opts.input ?? process.stdin;
     this.output = opts.output ?? process.stdout;
-    this.promptStr = opts.prompt ?? chalk.dim('> ');
+    this.promptStr = BG_BLACK + (opts.prompt ?? chalk.dim('> ')) + RST;
     this.onExit = opts.onExit;
     this.onUserMessage = opts.onUserMessage;
   }
@@ -171,7 +179,8 @@ export class Repl extends EventEmitter {
       terminal: process.stdout.isTTY === true,
     });
 
-    // ── Claude Code-style welcome ─────────────────────────────
+    initBlackBackground();
+
     // Clear the entire terminal for a fresh slate.
     console.clear();
 
@@ -1046,6 +1055,7 @@ export class Repl extends EventEmitter {
         // Non-fatal — exit anyway.
       }
     }
+    resetBackground();
     this.writeLine(chalk.dim('\nGoodbye.\n'));
     try {
       await this.onExit?.();
@@ -1087,13 +1097,16 @@ export class Repl extends EventEmitter {
   }
 
   private formatChatMessage(label: string, content: string, color: typeof chalk): string {
+    const W = process.stdout.columns || 100;
     const lines = content.split('\n');
+    let body: string;
     if (label === 'You') {
-      const bordered = lines.map((l) => `${chalk.dim('\u2502')} ${l}`);
-      return `\n${color.bold(label)}\n${bordered.join('\n')}\n`;
+      body = lines.map((l) => `${chalk.dim('\u2502')} ${l}`).join('\n');
+    } else {
+      body = lines.map((l) => `  ${l}`).join('\n');
     }
-    const body = lines.map((l) => `  ${l}`);
-    return `\n${color.bold(label)}\n${body.join('\n')}\n`;
+    const raw = `\n${color.bold(label)}\n${body}\n`;
+    return blackWrap(raw, W);
   }
 
   /** Write a string to the output stream. */

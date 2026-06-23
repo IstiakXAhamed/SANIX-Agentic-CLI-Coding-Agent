@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { execSync } from 'node:child_process';
+import { blackWrap, BG_BLACK, RST } from './welcome.js';
 
 export interface StatusBarData {
   provider: string;
@@ -36,5 +37,6 @@ export function renderStatusBar(data: StatusBarData): string {
   const right = ` ${DIM('v1.0.0')} `;
 
   const padLen = Math.max(1, W - left.length - right.length);
-  return `${DIM('\u2500'.repeat(W))}\n${left}${' '.repeat(padLen)}${right}\n`;
+  const raw = `${DIM('\u2500'.repeat(W))}\n${left}${' '.repeat(padLen)}${right}\n`;
+  return blackWrap(raw, W);
 }

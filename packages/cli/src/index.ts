@@ -46,7 +46,18 @@ export {
 } from './run-helpers.js';
 
 export { Repl, HISTORY_PATH, MAX_HISTORY, type ReplOptions, type ReplMessage } from './repl/Repl.js';
-export { renderWelcome, renderStatusLine, renderHelpTable } from './repl/welcome.js';
+export {
+  renderWelcome,
+  renderStatusLine,
+  renderHelpTable,
+  initBlackBackground,
+  resetBackground,
+  BG_BLACK,
+  RST,
+  blackWrap,
+  SET_BLACK_BG,
+  RESET_BG,
+} from './repl/welcome.js';
 export { renderStatusBar } from './repl/status-bar.js';
 export type { StatusBarData } from './repl/status-bar.js';
 export {
