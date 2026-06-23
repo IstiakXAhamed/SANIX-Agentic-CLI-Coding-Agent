@@ -1,72 +1,156 @@
 import chalk from 'chalk';
+import { basename } from 'node:path';
 import type { SanixConfig } from '@sanix/config';
-import { SANIX_LOGO, SANIX_TAGLINE, SANIX_BYLINE } from '../logo.js';
-import { ansi } from '@sanix/polish';
 
 const DIM = chalk.dim;
 const BOLD = chalk.bold;
-const TEAL = chalk.hex('#2dd4bf');
+const TEAL = chalk.hex('#00D4FF');
+const AMBER = chalk.hex('#FFB347');
+const GRAY = chalk.hex('#6b7280');
 
-const HR = DIM('\u2500'.repeat(58));
+const LOGO = [
+  ' ███████╗ █████╗ ███╗   ██╗██╗██╗  ██╗',
+  ' ██╔════╝██╔══██╗████╗  ██║██║╚██╗██╔╝',
+  ' ███████╗███████║██╔██╗ ██║██║ ╚███╔╝ ',
+  ' ╚════██║██╔══██║██║╚██╗██║██║ ██╔██╗ ',
+  ' ███████║██║  ██║██║ ╚████║██║██╔╝ ██╗',
+  ' ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝',
+];
 
-/**
- * Render the full branded welcome screen.
- */
-export function renderWelcome(config: SanixConfig, line?: string): string {
+interface RGB { r: number; g: number; b: number }
+const CYAN: RGB = { r: 0, g: 212, b: 255 };
+const VIOLET: RGB = { r: 167, g: 139, b: 250 };
+
+function gradientString(text: string, from: RGB, to: RGB): string {
+  const len = text.length;
+  if (len <= 1) return `\x1b[38;2;${from.r};${from.g};${from.b}m${text}\x1b[0m`;
   const parts: string[] = [];
-
-  // ── Logo gradient (teal → violet) ─────────────────────
-  parts.push('');
-  for (const logoLine of SANIX_LOGO) {
-    parts.push('  ' + gradientChalk(logoLine));
+  for (let i = 0; i < len; i++) {
+    const t = i / (len - 1);
+    const r = Math.round(from.r + (to.r - from.r) * t);
+    const g = Math.round(from.g + (to.g - from.g) * t);
+    const b = Math.round(from.b + (to.b - from.b) * t);
+    if (text[i] === ' ') {
+      parts.push(' ');
+    } else {
+      parts.push(`\x1b[38;2;${r};${g};${b}m${text[i]}\x1b[0m`);
+    }
   }
-  parts.push('');
-  parts.push(chalk.hex('#fbbf24').bold(`  ${SANIX_TAGLINE}`));
-  parts.push(DIM(`  ${SANIX_BYLINE}`));
-  parts.push('');
-
-  // ── Status panel (two-column) ─────────────────────────
-  const provider = config.providers.default || DIM('—');
-  const routing = config.providers.routing || 'auto';
-  const theme = config.tui?.theme || 'sanix';
-  const stream = config.tui?.streamOutput ? chalk.green('\u2713 yes') : DIM('\u2717 no');
-
-  parts.push(HR);
-  parts.push(`  ${BOLD('Provider')}  ${TEAL(provider.padEnd(16))}${BOLD('Routing')}  ${DIM(routing)}`);
-  parts.push(`  ${BOLD('Theme')}    ${TEAL(theme.padEnd(16))}${BOLD('Stream')}  ${stream}`);
-  parts.push(HR);
-
-  if (line) {
-    parts.push(`  ${DIM(line)}`);
-    parts.push(HR);
-  }
-
-  // ── Tips ──────────────────────────────────────────────
-  parts.push('');
-  parts.push(`  ${TEAL('\u25b6')} ${BOLD('Getting started')}`);
-  parts.push('');
-  parts.push(`   ${DIM('\u203a')} Type a message and press ${BOLD('Enter')} to chat with SANIX`);
-  parts.push(`   ${DIM('\u203a')} Type ${TEAL('/help')} to see all commands`);
-  parts.push(`   ${DIM('\u203a')} Type ${TEAL('/provider <name>')} to switch AI provider`);
-  parts.push(`   ${DIM('\u203a')} Type ${TEAL('/budget <n>')} to set token budget`);
-  parts.push(`   ${DIM('\u203a')} Type ${TEAL('/exit')} or press ${BOLD('Ctrl+C')} to quit`);
-  parts.push('');
-
-  return parts.join('\n');
+  return parts.join('');
 }
 
-/**
- * Compact one-line status (for mid-session display).
- */
-export function renderStatusLine(config: SanixConfig): string {
-  const provider = config.providers.default || '—';
-  const routing = config.providers.routing || 'auto';
-  return DIM('SANIX') + TEAL(` ${provider}`) + DIM(` \u00b7 ${routing} \u00b7 `) + TEAL('v1.0.0');
+function renderLogo(): string {
+  return gradientString(LOGO.join('\n'), CYAN, VIOLET);
 }
 
-/**
- * Boxed help table — rounded corners with teal + dim lines.
- */
+function tw(): number {
+  return process.stdout.columns || 100;
+}
+
+function th(): number {
+  return process.stdout.rows || 30;
+}
+
+function center(text: string, width: number): string {
+  const clean = text.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const pad = Math.max(0, Math.floor((width - clean.length) / 2));
+  return ' '.repeat(pad) + text;
+}
+
+function getCwdShort(): string {
+  const cwd = process.cwd();
+  const home = process.env.HOME ?? '';
+  if (home && cwd.startsWith(home)) {
+    return '~' + cwd.slice(home.length);
+  }
+  return cwd;
+}
+
+function getGitBranch(): string {
+  try {
+    const { execSync } = require('node:child_process');
+    return execSync('git branch --show-current', { timeout: 1000, stdio: 'pipe' }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+
+export function renderWelcome(config: SanixConfig): string {
+  const W = tw();
+  const H = th();
+  const provider = config.providers.default || '\u2014';
+
+  const lines: string[] = [];
+
+  const logoLines = renderLogo().split('\n');
+  const contentHeight = 2 + logoLines.length + 2 + 4 + 1 + 2 + 1 + 2;
+  const topPad = Math.max(0, Math.floor((H - contentHeight - 3) / 2));
+
+  for (let i = 0; i < topPad; i++) lines.push('');
+
+  for (const l of logoLines) {
+    lines.push(center(l, W));
+  }
+
+  lines.push('');
+  lines.push('');
+
+  const boxW = Math.min(56, W - 4);
+  const boxLeft = Math.floor((W - boxW) / 2);
+  const boxPad = ' '.repeat(boxLeft);
+
+  const sparkle = TEAL('\u2728');
+  const placeholder = `${sparkle} ${DIM('Ask anything...')} ${DIM('"Fix anything"')}`;
+  const info = `SANIX v1.0.0 ${DIM('\u00b7')} ${DIM(provider)}`;
+  const innerW = boxW - 2;
+
+  lines.push(`${boxPad}${DIM('\u250c')}${DIM('\u2500'.repeat(innerW))}${DIM('\u2510')}`);
+
+  const pClean = placeholder.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const pPad = Math.max(0, Math.floor((innerW - pClean.length) / 2));
+  lines.push(`${boxPad}${DIM('\u2502')}${' '.repeat(pPad)}${placeholder}${' '.repeat(Math.max(0, innerW - pPad - pClean.length))}${DIM('\u2502')}`);
+
+  const iClean = info.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const iPad = Math.max(0, Math.floor((innerW - iClean.length) / 2));
+  lines.push(`${boxPad}${DIM('\u2502')}${' '.repeat(iPad)}${info}${' '.repeat(Math.max(0, innerW - iPad - iClean.length))}${DIM('\u2502')}`);
+
+  lines.push(`${boxPad}${DIM('\u2514')}${DIM('\u2500'.repeat(innerW))}${DIM('\u2518')}`);
+
+  lines.push('');
+
+  const hints = `${DIM('tab')} ${DIM('agents')}    ${DIM('ctrl+p')} ${DIM('commands')}`;
+  lines.push(center(hints, W));
+
+  lines.push('');
+  lines.push('');
+
+  const tip = `${AMBER('\u25cf')} ${DIM('Tip')} ${DIM('Type')} ${TEAL('/help')} ${DIM('to see all commands')}`;
+  lines.push(center(tip, W));
+
+  lines.push('');
+  lines.push('');
+
+  const cwdShort = getCwdShort();
+  const branch = getGitBranch();
+  const branchPart = branch ? `:${branch}` : '';
+  const leftBar = ` ${DIM(cwdShort)}${DIM(branchPart)} ${GRAY('\u00b7')} ${DIM(provider)} ${DIM('/help for commands')} `;
+  const rightBar = ` ${DIM('v1.0.0')} `;
+  const padLen = Math.max(1, W - leftBar.length - rightBar.length);
+  lines.push(`${DIM('\u2500'.repeat(W))}`);
+  lines.push(`${leftBar}${' '.repeat(padLen)}${rightBar}`);
+
+  return lines.join('\n');
+}
+
+export function renderStatusBar(data: { provider: string; messageCount: number; cost?: number }): string {
+  const W = tw();
+  const left = ` ${DIM(data.provider)} ${GRAY('\u00b7')} ${DIM(`${data.messageCount} message${data.messageCount !== 1 ? 's' : ''}`)} ${DIM('/help for commands')} `;
+  const right = ` ${DIM('v1.0.0')} `;
+
+  const padLen = Math.max(1, W - left.length - right.length);
+  return `\n${DIM('\u2500'.repeat(W))}\n${left}${' '.repeat(padLen)}${right}\n`;
+}
+
 export function renderHelpTable(): string {
   const rows: Array<[string, string]> = [
     ['/help',            'Show this help message'],
@@ -98,28 +182,28 @@ export function renderHelpTable(): string {
     ['/exit',            'Exit (Ctrl+C or Ctrl+D)'],
   ];
 
+  const W = tw();
   const cmdW = Math.max(...rows.map(r => r[0].length)) + 2;
-  const descW = Math.max(...rows.map(r => r[1].length)) + 2;
-  const totalW = cmdW + descW + 3; // columns + 3 separators
 
-  const t = TEAL('\u250c') + DIM('\u2500'.repeat(totalW)) + TEAL('\u2510');
-  const b = TEAL('\u2514') + DIM('\u2500'.repeat(totalW)) + TEAL('\u2518');
+  const parts: string[] = [];
+  const topLine = DIM('\u250c' + '\u2500'.repeat(W - 2) + '\u2510');
+  const botLine = DIM('\u2514' + '\u2500'.repeat(W - 2) + '\u2518');
 
-  const out: string[] = ['', t];
+  parts.push('');
+  parts.push(topLine);
+
   for (const [cmd, desc] of rows) {
-    out.push(
-      DIM('\u2502 ') +
-      TEAL(cmd.padEnd(cmdW)) +
-      DIM('\u2502 ') +
-      DIM(desc.padEnd(descW)) +
-      DIM('\u2502'),
-    );
+    const l = ` ${TEAL(cmd.padEnd(cmdW))}${GRAY('\u2502')} ${DIM(desc)}`;
+    const padding = W - 2 - l.length;
+    parts.push(`${DIM('\u2502')}${l}${' '.repeat(Math.max(0, padding))}${DIM('\u2502')}`);
   }
-  out.push(b, '');
-  return out.join('\n');
+
+  parts.push(botLine);
+  return parts.join('\n');
 }
 
-/** Apply the SANIX brand gradient (teal → violet) to a string. */
-function gradientChalk(s: string): string {
-  return ansi.gradient(s, { r: 45, g: 212, b: 191 }, { r: 167, g: 139, b: 250 });
+export function renderStatusLine(config: SanixConfig): string {
+  const provider = config.providers.default || '\u2014';
+  const routing = config.providers.routing || 'auto';
+  return `${TEAL('\u25cf')} ${BOLD('SANIX')} ${DIM(provider)} ${GRAY('\u00b7')} ${DIM(routing)}`;
 }

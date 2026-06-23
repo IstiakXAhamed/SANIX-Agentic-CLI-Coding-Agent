@@ -51,6 +51,8 @@ import {
   type SlashCommand,
 } from './InputHandler.js';
 import { renderWelcome, renderHelpTable } from './welcome.js';
+import { renderStatusBar } from './status-bar.js';
+import type { StatusBarData } from './status-bar.js';
 
 /** Default path for persisted REPL history: `~/.sanix/history.json`. */
 export const HISTORY_PATH: string = join(homedir(), '.sanix', 'history.json');
@@ -136,6 +138,11 @@ export class Repl extends EventEmitter {
   private sessionManager: SessionManager | null = null;
   /** V13-1 — The currently-active session (if any). */
   private activeSession: Session | null = null;
+  /** Data for the bottom status bar. */
+  private statusData: StatusBarData = {
+    provider: '—',
+    messageCount: 0,
+  };
 
   constructor(opts: ReplOptions) {
     super();
@@ -143,7 +150,7 @@ export class Repl extends EventEmitter {
     this.historyPath = opts.historyPath ?? HISTORY_PATH;
     this.input = opts.input ?? process.stdin;
     this.output = opts.output ?? process.stdout;
-    this.promptStr = opts.prompt ?? chalk.hex('#00D4FF')('sanix> ');
+    this.promptStr = opts.prompt ?? chalk.dim('> ');
     this.onExit = opts.onExit;
     this.onUserMessage = opts.onUserMessage;
   }
@@ -164,7 +171,14 @@ export class Repl extends EventEmitter {
       terminal: process.stdout.isTTY === true,
     });
 
-    // ── Rich branded welcome screen ──────────────────────────
+    // ── Claude Code-style welcome ─────────────────────────────
+    // Clear the entire terminal for a fresh slate.
+    console.clear();
+
+    // Seed status bar data from the current config.
+    this.statusData.provider = this.ctx.config.providers.default || '\u2014';
+    this.statusData.messageCount = 0;
+
     this.writeLine(renderWelcome(this.ctx.config));
 
     // V13-1 — Load (or resume) the active session, and replay its messages
@@ -281,6 +295,7 @@ export class Repl extends EventEmitter {
       return;
     }
 
+    this.statusData.messageCount = this.conversation.length + 1;
     this.conversation.push({
       role: 'user',
       content: trimmed,
@@ -289,6 +304,9 @@ export class Repl extends EventEmitter {
     // V13-1 — Persist the user message to the active session (creating
     // one on the fly if none exists yet).
     this.ensureActiveSession();
+
+    // Show the user message with a ChatGPT-style "You" label
+    this.writeLine(this.formatChatMessage('You', trimmed, chalk.hex('#00D4FF')));
     if (this.activeSession && this.sessionManager) {
       try {
         this.sessionManager.addMessage(this.activeSession.id, {
@@ -308,7 +326,9 @@ export class Repl extends EventEmitter {
         content: reply,
         ts: new Date().toISOString(),
       });
-      this.writeLine(chalk.white(`\n${reply}\n\n`));
+      this.statusData.messageCount = this.conversation.length + 1;
+      this.writeLine(this.formatChatMessage('SANIX', reply, chalk.hex('#FFB347')));
+      this.writeLine(renderStatusBar(this.statusData));
       // V13-1 — Persist the assistant reply to the active session.
       if (this.activeSession && this.sessionManager) {
         try {
@@ -618,6 +638,7 @@ export class Repl extends EventEmitter {
       return;
     }
     this.ctx.config.providers.default = name;
+    this.statusData.provider = name;
     this.writeLine(chalk.green(`Active provider: ${name}\n`));
   }
 
@@ -1067,6 +1088,14 @@ export class Repl extends EventEmitter {
     } catch {
       // Non-fatal — history persistence is best-effort.
     }
+  }
+
+  /** Format a message with a ChatGPT-style label. */
+  private formatChatMessage(label: string, content: string, color: typeof chalk): string {
+    const labelLine = `${color.bold(label)}`;
+    const lines = content.split('\n');
+    const body = lines.map((l) => `  ${l}`);
+    return `\n${labelLine}\n${body.join('\n')}\n`;
   }
 
   /** Write a string to the output stream. */
