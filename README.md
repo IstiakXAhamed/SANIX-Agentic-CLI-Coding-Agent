@@ -407,6 +407,19 @@ await registry.get('ui-designer')!.run('Design a login page with OAuth');
 - Error Formatter (actionable suggestions), Banner Renderer
 - Status Line, Table Renderer, Confetti, Toast Notifications
 
+### 🎨 OpenCode-Style Terminal UI (V21)
+- **Vertically centered layout** — Logo + input box centered in the terminal with flex padding
+- **Gradient logo** — Per-character cyan→violet RGB gradient on the SANIX Unicode block-letter logo
+- **Input box** — Simple bordered box with `✨ Ask anything... "Fix anything"` placeholder, agent/model info below
+- **Keyboard hints** — Centered `tab agents / ctrl+p commands` below the input box
+- **Tip line** — `● Tip Type /help to see all commands` with amber accent
+- **Bottom status bar** — `~/path:branch · provider /help for commands` (left) + `v1.0.0` (right), matching OpenCode's footer format
+- **Clean prompt** — Minimal `>` prompt (dimmed) with terminal clear on REPL start for a fresh slate
+- **ChatGPT-style messages** — `You` (teal) / `SANIX` (amber) bold labels with 2-space indented content
+- **Dynamic status bar** — Provider + message count + version shown after each assistant reply
+- **No outer borders** — Clean minimal design without box-drawing borders wrapping the screen
+- Files: `packages/cli/src/repl/welcome.ts`, `packages/cli/src/repl/status-bar.ts`, `packages/cli/src/repl/Repl.ts`
+
 ### 🆓 OpenCode Zen Provider (V20)
 - New adapter `OpencodeZenAdapter` at `packages/providers/src/adapters/OpencodeZenAdapter.ts`
 - Base URL: `https://inference.de-fra.zenformation.com/v1` (OpenAI-compatible)
@@ -702,7 +715,7 @@ sanix update install          # Download + atomic binary swap
 | `@sanix/tools` | 22+ tools (filesystem, shell, code, web, memory, MCP) |
 | `@sanix/tui` | Ink v5 React TUI with 11 components |
 | `@sanix/config` | Zod-validated config + ProfileManager + SecretManager |
-| `@sanix/cli` | Commander.js CLI with 27 commands (incl. session, intelligence, init, fix, explain, commit, doctor, vision, update, workspace, mcp-scan, voice, stream, history, providers models) + interactive REPL + Speed-First Intelligence System (10 modules, 606 built-in rules/patterns/examples) + Streaming/Vision/Voice/Workspace/RunHistory integrations |
+| `@sanix/cli` | Commander.js CLI with 27 commands (incl. session, intelligence, init, fix, explain, commit, doctor, vision, update, workspace, mcp-scan, voice, stream, history, providers models) + OpenCode-style interactive REPL + Speed-First Intelligence System (10 modules, 606 built-in rules/patterns/examples) + Streaming/Vision/Voice/Workspace/RunHistory integrations |
 | `@sanix/auth` | OAuth 2.0 PKCE (Google/GitHub/Anthropic/Microsoft) |
 | `@sanix/optimizer` | Context/token optimization |
 | `@sanix/memory-v2` | HNSW index, Ebbinghaus, salience, dedup |
