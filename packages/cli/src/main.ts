@@ -35,10 +35,14 @@
 
 import { Command, Option } from 'commander';
 import { fileURLToPath } from 'node:url';
-import { realpathSync } from 'node:fs';
+import { realpathSync, existsSync } from 'node:fs';
 import chalk from 'chalk';
+import { AnimatedSpinner } from '@sanix/polish';
+import { DEFAULT_CONFIG_PATH, expandHome } from '@sanix/config';
 import { bootstrap, type SanixContext, type BootstrapOptions } from './bootstrap.js';
 import { printLogo } from './logo.js';
+import { runOnboarding } from './commands/onboarding.js';
+import { chatCommand } from './commands/chat.js';
 import { registerRunCommand } from './commands/run.js';
 import { registerChatCommand } from './commands/chat.js';
 import { registerCodeCommand } from './commands/code.js';
@@ -87,9 +91,17 @@ let cachedCtx: SanixContext | null = null;
  */
 async function ctxProvider(): Promise<SanixContext> {
   if (cachedCtx) return cachedCtx;
+  const spinner = new AnimatedSpinner({ scene: 'boot', text: 'Initializing SANIX…', glow: true });
+  spinner.start();
   const opts: BootstrapOptions = {};
   if (globalOptions.config) opts.configPath = globalOptions.config;
-  cachedCtx = await bootstrap(opts);
+  try {
+    cachedCtx = await bootstrap(opts);
+    spinner.succeed('SANIX initialized');
+  } catch (err) {
+    spinner.fail('SANIX initialization failed');
+    throw err;
+  }
   return cachedCtx;
 }
 
@@ -172,9 +184,19 @@ export function createProgram(): Command {
 export async function main(argv: string[] = process.argv): Promise<void> {
   const program = createProgram();
 
-  // Print the logo on `sanix` (no args) before the help text.
+  // First-run detection: when `sanix` is run with no arguments.
   if (argv.length <= 2) {
-    printLogo();
+    const configPath = expandHome(DEFAULT_CONFIG_PATH);
+    if (!existsSync(configPath)) {
+      await runOnboarding();
+      process.exit(0);
+    }
+    // Config exists — launch the interactive REPL (chat mode) directly.
+    // This makes `sanix` feel alive: it starts the agent chat wherever
+    // you are in the terminal.
+    const ctx = await ctxProvider();
+    await chatCommand(ctx, {});
+    return;
   }
 
   try {

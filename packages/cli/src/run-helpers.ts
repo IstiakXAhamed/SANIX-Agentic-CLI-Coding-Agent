@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import chalk from 'chalk';
-import ora, { type Ora } from 'ora';
+import { AnimatedSpinner, type SpinnerScene } from '@sanix/polish';
 import {
   AgentLoop,
   Planner,
@@ -313,16 +313,22 @@ async function runLoopPlainText(
   opts: ExecuteGoalOptions,
   signal: AbortSignal,
 ): Promise<AgentResult> {
-  const spinner: Ora = ora({
-    text: chalk.cyan('Booting SANIX agent…'),
-    color: 'cyan',
-  }).start();
+  const spinner = new AnimatedSpinner({ scene: 'boot', text: 'Booting SANIX agent…', glow: true });
+  spinner.start();
 
   let lastIteration = 0;
+  let scene: SpinnerScene = 'thinking';
 
   loop.on('decide', ({ iteration, decision }) => {
     lastIteration = iteration;
     spinner.stop();
+    // Map decision types to spinner scenes
+    if (decision.type === 'TOOL_CALL') scene = 'tool';
+    else if (decision.type === 'SUB_AGENT') scene = 'processing';
+    else if (decision.type === 'SEARCH') scene = 'searching';
+    else if (decision.type === 'PLAN') scene = 'planning';
+    else scene = 'thinking';
+
     const type = chalk.hex('#00D4FF')(decision.type);
     const reasoning =
       'reasoning' in decision && decision.reasoning
@@ -335,8 +341,8 @@ async function runLoopPlainText(
 
   loop.on('iteration', ({ iteration, tokens }) => {
     lastIteration = iteration;
-    spinner.text = chalk.cyan(
-      `Iter ${iteration} · ${tokens.inputTokens + tokens.outputTokens} tokens`,
+    spinner.setText(
+      chalk.cyan(`Iter ${iteration} · ${tokens.inputTokens + tokens.outputTokens} tokens`),
     );
   });
 
@@ -345,7 +351,7 @@ async function runLoopPlainText(
   });
 
   const runContext = buildRunContext(ctx, opts, signal);
-  spinner.text = chalk.cyan(`Goal: ${goal}`);
+  spinner.setText(chalk.cyan(`Goal: ${goal}`));
 
   try {
     const result = await loop.run(goal, runContext);
@@ -354,8 +360,6 @@ async function runLoopPlainText(
   } catch (err) {
     spinner.fail(chalk.red('Agent loop failed'));
     const msg = err instanceof Error ? err.message : String(err);
-    // Return a synthetic failure result so the caller's renderResult can
-    // produce a consistent summary.
     return {
       success: false,
       summary: `Agent loop crashed: ${msg}`,

@@ -48,9 +48,9 @@ function toText(content: unknown): string {
 import type { SanixContext } from '../bootstrap.js';
 import {
   parseSlashCommand,
-  slashHelpText,
   type SlashCommand,
 } from './InputHandler.js';
+import { renderWelcome, renderHelpTable } from './welcome.js';
 
 /** Default path for persisted REPL history: `~/.sanix/history.json`. */
 export const HISTORY_PATH: string = join(homedir(), '.sanix', 'history.json');
@@ -164,7 +164,8 @@ export class Repl extends EventEmitter {
       terminal: process.stdout.isTTY === true,
     });
 
-    this.writeLine(chalk.hex('#00D4FF')('SANIX chat — type /help for commands, /exit to quit.\n'));
+    // ── Rich branded welcome screen ──────────────────────────
+    this.writeLine(renderWelcome(this.ctx.config));
 
     // V13-1 — Load (or resume) the active session, and replay its messages
     // into the in-memory conversation. This is async but we don't block the
@@ -367,7 +368,7 @@ export class Repl extends EventEmitter {
   private async handleSlash(cmd: SlashCommand): Promise<void> {
     switch (cmd.kind) {
       case 'help':
-        this.writeLine(slashHelpText() + '\n');
+        this.writeLine(renderHelpTable() + '\n');
         return;
       case 'clear':
         await this.handleClear();

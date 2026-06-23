@@ -7,11 +7,12 @@
 
 export * as ansi from './ansi.js';
 export type { RGB } from './ansi.js';
-export { setColorEnabled, isColorEnabled, stripAnsi, visibleWidth } from './ansi.js';
+export { setColorEnabled, isColorEnabled, stripAnsi, visibleWidth, glow, breathe, brightRgb, dimRgb, breathDots } from './ansi.js';
+export type { BreathPhase } from './ansi.js';
 export * as brand from './brand.js';
 export { SANIX_PALETTE, SANIX_LOGO, SANIX_TAGLINE, SANIX_VERSION_LINE } from './brand.js';
 export { AnimatedSpinner } from './AnimatedSpinner.js';
-export type { AnimatedSpinnerOptions, SpinnerStyle } from './AnimatedSpinner.js';
+export type { AnimatedSpinnerOptions, SpinnerStyle, SpinnerScene } from './AnimatedSpinner.js';
 export { ProgressBar, MultiProgress } from './ProgressBar.js';
 export type { ProgressBarOptions } from './ProgressBar.js';
 export { OnboardingWizard } from './OnboardingWizard.js';

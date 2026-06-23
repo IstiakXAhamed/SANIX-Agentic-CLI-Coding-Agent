@@ -181,6 +181,75 @@ export function stripAnsi(s: string): string {
   return s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
 }
 
+// ── Glow / breathing helpers ──────────────────────────────────────────────
+
+/**
+ * Apply a "bright" version of an RGB color (moves toward white by 40%).
+ * Useful for glow/pulse effects where we alternate between normal and bright.
+ */
+export function brightRgb(c: RGB): RGB {
+  return {
+    r: Math.min(255, Math.round(c.r + (255 - c.r) * 0.4)),
+    g: Math.min(255, Math.round(c.g + (255 - c.g) * 0.4)),
+    b: Math.min(255, Math.round(c.b + (255 - c.b) * 0.4)),
+  };
+}
+
+/**
+ * Apply a "dim" version of an RGB color (moves toward black by 50%).
+ */
+export function dimRgb(c: RGB): RGB {
+  return {
+    r: Math.round(c.r * 0.5),
+    g: Math.round(c.g * 0.5),
+    b: Math.round(c.b * 0.5),
+  };
+}
+
+/**
+ * Render text with a "glowing" effect by applying bold + bright color
+ * (creates the illusion of glow in the terminal).
+ *
+ * @param s   The text to render.
+ * @param c   The base RGB color.
+ * @returns   ANSI-escaped text with bold + bright color.
+ */
+export function glow(s: string, c: RGB): string {
+  if (!colorEnabled) return s;
+  const bright = brightRgb(c);
+  return `\x1b[1m\x1b[38;2;${bright.r};${bright.g};${bright.b}m${s}\x1b[${SGR.Reset}m`;
+}
+
+/**
+ * Breathing modes for the text glow animation.
+ * - 'in'  : bright/bold (inhale — visible)
+ * - 'out' : dim/normal (exhale — faded)
+ * - 'hold': normal (neutral)
+ */
+export type BreathPhase = 'in' | 'out' | 'hold';
+
+/**
+ * Apply a breathing glow to text based on the current phase.
+ * `in` → bright + bold, `hold` → normal color, `out` → dim color.
+ *
+ * @param s     The text.
+ * @param c     The base RGB color.
+ * @param phase Current breathing phase.
+ */
+export function breathe(s: string, c: RGB, phase: BreathPhase): string {
+  if (!colorEnabled || phase === 'hold') return rgb(s, c);
+  if (phase === 'in') return glow(s, c);
+  return rgb(s, dimRgb(c));
+}
+
+/**
+ * A small string that acts as a visual "pulse" indicator (3 dots).
+ * When `phase` is `in`, dots are bold; when `out`, they're dim.
+ */
+export function breathDots(c: RGB, phase: BreathPhase): string {
+  return breathe('···', c, phase);
+}
+
 /** Visible width of a string, ignoring ANSI escapes and combining marks. */
 export function visibleWidth(s: string): number {
   return [...stripAnsi(s)].length;
