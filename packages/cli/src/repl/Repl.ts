@@ -240,11 +240,7 @@ export class Repl extends EventEmitter {
           content: m.content,
           ts: new Date(m.timestamp).toISOString(),
         }));
-        if (active.messages.length > 0) {
-          this.writeLine(
-            chalk.dim(`Resumed session ${active.id.slice(0, 8)} "${active.name}" (${active.messages.length} messages).\n`),
-          );
-        }
+  
       }
     } catch (err) {
       // Non-fatal — sessions are best-effort.
@@ -1090,12 +1086,14 @@ export class Repl extends EventEmitter {
     }
   }
 
-  /** Format a message with a ChatGPT-style label. */
   private formatChatMessage(label: string, content: string, color: typeof chalk): string {
-    const labelLine = `${color.bold(label)}`;
     const lines = content.split('\n');
+    if (label === 'You') {
+      const bordered = lines.map((l) => `${chalk.dim('\u2502')} ${l}`);
+      return `\n${color.bold(label)}\n${bordered.join('\n')}\n`;
+    }
     const body = lines.map((l) => `  ${l}`);
-    return `\n${labelLine}\n${body.join('\n')}\n`;
+    return `\n${color.bold(label)}\n${body.join('\n')}\n`;
   }
 
   /** Write a string to the output stream. */

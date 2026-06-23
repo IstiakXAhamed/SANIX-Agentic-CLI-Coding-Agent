@@ -81,20 +81,25 @@ export function renderWelcome(config: SanixConfig): string {
   const provider = config.providers.default || '\u2014';
 
   const lines: string[] = [];
-
   const logoLines = renderLogo().split('\n');
-  const contentHeight = 2 + logoLines.length + 2 + 4 + 1 + 2 + 1 + 2;
+
+  // Calculate total content height for vertical centering:
+  // logo (6 lines) + gap (1) + input box (4 lines) + gap (2) + hints (1) + gap (1) + tip (1) + gap (2)
+  const contentHeight = logoLines.length + 1 + 4 + 2 + 1 + 1 + 1 + 2;
   const topPad = Math.max(0, Math.floor((H - contentHeight - 3) / 2));
 
+  // Top padding for vertical centering
   for (let i = 0; i < topPad; i++) lines.push('');
 
+  // Logo (centered horizontally)
   for (const l of logoLines) {
     lines.push(center(l, W));
   }
 
-  lines.push('');
+  // Gap after logo
   lines.push('');
 
+  // Input box with ┃ left border (matching OpenCode's SplitBorder)
   const boxW = Math.min(56, W - 4);
   const boxLeft = Math.floor((W - boxW) / 2);
   const boxPad = ' '.repeat(boxLeft);
@@ -102,40 +107,51 @@ export function renderWelcome(config: SanixConfig): string {
   const sparkle = TEAL('\u2728');
   const placeholder = `${sparkle} ${DIM('Ask anything...')} ${DIM('"Fix anything"')}`;
   const info = `SANIX v1.0.0 ${DIM('\u00b7')} ${DIM(provider)}`;
-  const innerW = boxW - 2;
+  const innerW = boxW - 2; // Account for ┃ border
 
-  lines.push(`${boxPad}${DIM('\u250c')}${DIM('\u2500'.repeat(innerW))}${DIM('\u2510')}`);
-
+  // ┃ left border + content + ┃ right border
   const pClean = placeholder.replace(/\x1b\[\d+(;\d+)*m/g, '');
   const pPad = Math.max(0, Math.floor((innerW - pClean.length) / 2));
-  lines.push(`${boxPad}${DIM('\u2502')}${' '.repeat(pPad)}${placeholder}${' '.repeat(Math.max(0, innerW - pPad - pClean.length))}${DIM('\u2502')}`);
-
   const iClean = info.replace(/\x1b\[\d+(;\d+)*m/g, '');
   const iPad = Math.max(0, Math.floor((innerW - iClean.length) / 2));
+
+  // Box top: ┌──────┐
+  lines.push(`${boxPad}${DIM('\u250c')}${DIM('\u2500'.repeat(innerW))}${DIM('\u2510')}`);
+
+  // Box content: ┃ placeholder ┃
+  lines.push(`${boxPad}${DIM('\u2502')}${' '.repeat(pPad)}${placeholder}${' '.repeat(Math.max(0, innerW - pPad - pClean.length))}${DIM('\u2502')}`);
+
+  // Box info: ┃ SANIX v1.0.0 · provider ┃
   lines.push(`${boxPad}${DIM('\u2502')}${' '.repeat(iPad)}${info}${' '.repeat(Math.max(0, innerW - iPad - iClean.length))}${DIM('\u2502')}`);
 
+  // Box bottom: └──────┘
   lines.push(`${boxPad}${DIM('\u2514')}${DIM('\u2500'.repeat(innerW))}${DIM('\u2518')}`);
 
+  // Gap after input box
   lines.push('');
 
+  // Keyboard hints (centered)
   const hints = `${DIM('tab')} ${DIM('agents')}    ${DIM('ctrl+p')} ${DIM('commands')}`;
   lines.push(center(hints, W));
 
-  lines.push('');
+  // Gap
   lines.push('');
 
+  // Tip line (centered)
   const tip = `${AMBER('\u25cf')} ${DIM('Tip')} ${DIM('Type')} ${TEAL('/help')} ${DIM('to see all commands')}`;
   lines.push(center(tip, W));
 
-  lines.push('');
+  // Fill remaining space to bottom
   lines.push('');
 
+  // Bottom status bar (matching OpenCode footer format)
   const cwdShort = getCwdShort();
   const branch = getGitBranch();
   const branchPart = branch ? `:${branch}` : '';
   const leftBar = ` ${DIM(cwdShort)}${DIM(branchPart)} ${GRAY('\u00b7')} ${DIM(provider)} ${DIM('/help for commands')} `;
   const rightBar = ` ${DIM('v1.0.0')} `;
   const padLen = Math.max(1, W - leftBar.length - rightBar.length);
+
   lines.push(`${DIM('\u2500'.repeat(W))}`);
   lines.push(`${leftBar}${' '.repeat(padLen)}${rightBar}`);
 
