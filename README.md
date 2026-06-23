@@ -415,7 +415,7 @@ await registry.get('ui-designer')!.run('Design a login page with OAuth');
 - **Tip line** — `● Tip Type /help to see all commands` with amber accent
 - **Bottom status bar** — `~/path:branch · provider /help for commands` (left) + `v1.0.0` (right), matching OpenCode's footer format
 - **Clean prompt** — Minimal `>` prompt (dimmed) with terminal clear on REPL start for a fresh slate
-- **ChatGPT-style messages** — `You` (teal) / `SANIX` (amber) bold labels with 2-space indented content
+- **Chat-style messages** — `You` (teal) with `┃` left border / `SANIX` (amber) with 2-space indent
 - **Dynamic status bar** — Provider + message count + version shown after each assistant reply
 - **No outer borders** — Clean minimal design without box-drawing borders wrapping the screen
 - Files: `packages/cli/src/repl/welcome.ts`, `packages/cli/src/repl/status-bar.ts`, `packages/cli/src/repl/Repl.ts`
