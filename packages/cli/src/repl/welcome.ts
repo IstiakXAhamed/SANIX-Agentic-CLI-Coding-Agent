@@ -2,6 +2,51 @@ import chalk from 'chalk';
 import { basename } from 'node:path';
 import type { SanixConfig } from '@sanix/config';
 
+// ── ANSI escape sequences for full-black background ──────────────
+/** OSC 11 — set terminal default background to pure black (#000000). */
+export const SET_BLACK_BG = '\x1b]11;#000000\x07';
+/** OSC 111 — reset terminal default background. */
+export const RESET_BG = '\x1b]111\x07';
+/** ANSI 24-bit black background (48;2;0;0;0). */
+export const BG_BLACK = '\x1b[48;2;0;0;0m';
+/** ANSI reset. */
+export const RST = '\x1b[0m';
+/** Erase entire display + home cursor. */
+const CLR = '\x1b[2J\x1b[H';
+
+function stripAnsi(s: string): string {
+  return s.replace(/\x1b\[[\d;]*m/g, '');
+}
+
+function blackLine(content: string, cols: number): string {
+  const cleanLen = stripAnsi(content).length;
+  const pad = Math.max(0, cols - cleanLen);
+  return BG_BLACK + content + ' '.repeat(pad) + RST;
+}
+
+function blackFill(cols: number): string {
+  return BG_BLACK + ' '.repeat(cols) + RST;
+}
+
+// ── Background lifecycle ─────────────────────────────────────────
+/** Call once at REPL start to turn the terminal background black. */
+export function initBlackBackground(): void {
+  process.stdout.write(SET_BLACK_BG);
+}
+
+/** Call on REPL exit to restore the terminal's original background. */
+export function resetBackground(): void {
+  process.stdout.write(RESET_BG);
+}
+
+/** Apply black background to every line of a multi-line string. */
+export function blackWrap(text: string, cols: number): string {
+  const lines = text.split('\n');
+  return lines.map(l => blackLine(l, cols)).join('\n');
+}
+
+// ── End background helpers ───────────────────────────────────────
+
 const DIM = chalk.dim;
 const BOLD = chalk.bold;
 const TEAL = chalk.hex('#00D4FF');
@@ -52,7 +97,7 @@ function th(): number {
 }
 
 function center(text: string, width: number): string {
-  const clean = text.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const clean = stripAnsi(text);
   const pad = Math.max(0, Math.floor((width - clean.length) / 2));
   return ' '.repeat(pad) + text;
 }
@@ -110,9 +155,9 @@ export function renderWelcome(config: SanixConfig): string {
   const innerW = boxW - 2; // Account for ┃ border
 
   // ┃ left border + content + ┃ right border
-  const pClean = placeholder.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const pClean = stripAnsi(placeholder);
   const pPad = Math.max(0, Math.floor((innerW - pClean.length) / 2));
-  const iClean = info.replace(/\x1b\[\d+(;\d+)*m/g, '');
+  const iClean = stripAnsi(info);
   const iPad = Math.max(0, Math.floor((innerW - iClean.length) / 2));
 
   // Box top: ┌──────┐
@@ -150,12 +195,19 @@ export function renderWelcome(config: SanixConfig): string {
   const branchPart = branch ? `:${branch}` : '';
   const leftBar = ` ${DIM(cwdShort)}${DIM(branchPart)} ${GRAY('\u00b7')} ${DIM(provider)} ${DIM('/help for commands')} `;
   const rightBar = ` ${DIM('v1.0.0')} `;
-  const padLen = Math.max(1, W - leftBar.length - rightBar.length);
+  const padLen = Math.max(1, W - stripAnsi(leftBar).length - stripAnsi(rightBar).length);
 
   lines.push(`${DIM('\u2500'.repeat(W))}`);
   lines.push(`${leftBar}${' '.repeat(padLen)}${rightBar}`);
 
-  return lines.join('\n');
+  const result = lines.map(l => blackLine(l, W));
+
+  const remaining = H - result.length;
+  for (let i = 0; i < remaining; i++) {
+    result.push(blackFill(W));
+  }
+
+  return result.join('\n');
 }
 
 export function renderStatusBar(data: { provider: string; messageCount: number; cost?: number }): string {
@@ -164,7 +216,8 @@ export function renderStatusBar(data: { provider: string; messageCount: number; 
   const right = ` ${DIM('v1.0.0')} `;
 
   const padLen = Math.max(1, W - left.length - right.length);
-  return `\n${DIM('\u2500'.repeat(W))}\n${left}${' '.repeat(padLen)}${right}\n`;
+  const raw = `\n${DIM('\u2500'.repeat(W))}\n${left}${' '.repeat(padLen)}${right}\n`;
+  return blackWrap(raw, W);
 }
 
 export function renderHelpTable(): string {
